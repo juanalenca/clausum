@@ -55,65 +55,8 @@ STRENGTH_TEXT = {
 
 # ==============================================================================
 # FUNÇÕES CRIPTOGRÁFICAS (BACKEND)
-# ==============================================================================
+from crypto_utils import derive_key, zip_source, unzip_data
 
-
-def derive_key(password: str, salt: bytes) -> bytes:
-    kdf = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, PBKDF2_ITERATIONS)
-    return base64.urlsafe_b64encode(kdf)
-
-
-def zip_source(source_path, progress_callback=None):
-    in_memory_zip = io.BytesIO()
-    try:
-        with zipfile.ZipFile(in_memory_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            if os.path.isdir(source_path):
-                files_list = []
-                for root, _, files in os.walk(source_path):
-                    for file in files:
-                        files_list.append(os.path.join(root, file))
-               
-                total_files = len(files_list)
-                for idx, file_path in enumerate(files_list):
-                    archive_name = os.path.relpath(file_path, os.path.dirname(source_path))
-                    zipf.write(file_path, arcname=archive_name)
-                    if progress_callback:
-                        progress_callback(int((idx + 1) / total_files * 50))
-            elif os.path.isfile(source_path):
-                archive_name = os.path.basename(source_path)
-                zipf.write(source_path, arcname=archive_name)
-                if progress_callback:
-                    progress_callback(50)
-            else:
-                return None
-    except Exception as e:
-        print(f"Erro na compactação: {e}", file=sys.stderr)
-        return None
-   
-    in_memory_zip.seek(0)
-    return in_memory_zip.read()
-
-
-def unzip_data(zip_data, destination_folder, progress_callback=None):
-    try:
-        if not os.path.exists(destination_folder):
-            os.makedirs(destination_folder)
-       
-        in_memory_zip = io.BytesIO(zip_data)
-        with zipfile.ZipFile(in_memory_zip, 'r') as zipf:
-            members = zipf.namelist()
-            total_files = len(members)
-            for idx, member in enumerate(members):
-                zipf.extract(member, destination_folder)
-                if progress_callback:
-                    progress_callback(50 + int((idx + 1) / total_files * 50))
-        return True
-    except Exception as e:
-        print(f"Erro na extração: {e}", file=sys.stderr)
-        return False
-
-
-# ==============================================================================
 # INTERFACE GRÁFICA
 # ==============================================================================
 
